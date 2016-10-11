@@ -14,9 +14,9 @@ public struct SimpleTouch {
 
     public static var hardwareSupportsTouchIDOrPasscode: TouchIDResponse {
         switch evaluateTouchIDOrPasscodePolicy {
-            case let x where x == .Error(.PasscodeNotSet): return x
-            case let x where x == .Error(.TouchIDNotAvailable): return x
-            default: return .Success
+            case let x where x == .error(.passcodeNotSet): return x
+            case let x where x == .error(.touchIDNotAvailable): return x
+            default: return .success
         }
     }
 
@@ -24,40 +24,40 @@ public struct SimpleTouch {
         return evaluateTouchIDOrPasscodePolicy
     }
 
-    private static var evaluateTouchIDOrPasscodePolicy: TouchIDResponse {
+    fileprivate static var evaluateTouchIDOrPasscodePolicy: TouchIDResponse {
         let context = LAContext()
         var error: NSError?
-        if context.canEvaluatePolicy(.DeviceOwnerAuthenticationWithBiometrics, error: &error) {
-            return .Success
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            return .success
         }
-        if #available(iOS 9.0, *), context.canEvaluatePolicy(.DeviceOwnerAuthentication, error: &error) {
-            return .SuccessPasscode
+        if #available(iOS 9.0, *), context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            return .successPasscode
         }
-        return .Error(TouchIDError.createError(error))
+        return .error(TouchIDError.createError(error))
     }
 
-    private static func presentAuthentication(type: LAPolicy, reason: String, fallbackTitle: String, callback: TouchIDPresenterCallback) {
+    fileprivate static func presentAuthentication(_ type: LAPolicy, reason: String, fallbackTitle: String, callback: @escaping TouchIDPresenterCallback) {
         guard #available(iOS 9.0, *) else { return }
         let context = LAContext()
         context.localizedFallbackTitle = fallbackTitle
         context.evaluatePolicy(type, localizedReason: reason) { _, error in
             guard error == nil else {
-                dispatch_async(dispatch_get_main_queue(), {
-                    callback(.Error(TouchIDError.createError(error)))
+                DispatchQueue.main.async(execute: {
+                    callback(.error(TouchIDError.createError(error as NSError?)))
                 })
                 return
             }
-            dispatch_async(dispatch_get_main_queue(), {
-                callback(.Success)
+            DispatchQueue.main.async(execute: {
+                callback(.success)
             })
         }
     }
 
-    public static func presentTouchID(reason: String, fallbackTitle: String, callback: TouchIDPresenterCallback) {
-        presentAuthentication(.DeviceOwnerAuthenticationWithBiometrics, reason: reason, fallbackTitle: fallbackTitle, callback: callback)
+    public static func presentTouchID(_ reason: String, fallbackTitle: String, callback: @escaping TouchIDPresenterCallback) {
+        presentAuthentication(.deviceOwnerAuthenticationWithBiometrics, reason: reason, fallbackTitle: fallbackTitle, callback: callback)
     }
 
-    public static func presentPasscode(reason: String, fallbackTitle: String, callback: TouchIDPresenterCallback) {
-        presentAuthentication(.DeviceOwnerAuthentication, reason: reason, fallbackTitle: fallbackTitle, callback: callback)
+    public static func presentPasscode(_ reason: String, fallbackTitle: String, callback: @escaping TouchIDPresenterCallback) {
+        presentAuthentication(.deviceOwnerAuthentication, reason: reason, fallbackTitle: fallbackTitle, callback: callback)
     }
 }

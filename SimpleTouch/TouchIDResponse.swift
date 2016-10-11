@@ -7,20 +7,20 @@
 //
 
 public enum TouchIDResponse {
-  case Success
-  case SuccessPasscode
-  case Error(TouchIDError)
+  case success
+  case successPasscode
+  case error(TouchIDError)
 }
 
 extension TouchIDResponse: Equatable {}
 
 public func == (lhs: TouchIDResponse, rhs: TouchIDResponse) -> Bool {
   switch (lhs, rhs) {
-  case (.Success, .Success):
+  case (.success, .success):
     return true
-  case (.SuccessPasscode, .SuccessPasscode):
+  case (.successPasscode, .successPasscode):
     return true
-  case (let .Error(e1), let .Error(e2)):
+  case (let .error(e1), let .error(e2)):
     return e1 == e2
   default:
     return false
